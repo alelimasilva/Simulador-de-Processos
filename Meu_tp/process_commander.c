@@ -25,7 +25,7 @@ int main() {
         close(writepipe[0]);
         execlp("./process_commander", "./process_commander", NULL);
 
-    } else { //caso o usuário queira fazer uma entrada manual
+    } else {
 		char letra = '\0';
         close(writepipe[0]);
 		while(letra != 'T'){
