@@ -38,3 +38,5 @@ celula_pcb *busca(CPU *cpu);
 void bloqueia();
 void encerra();
 void reporter();
+void printa_processo(celula_pcb *p);
+void printa_comando(programa p);
