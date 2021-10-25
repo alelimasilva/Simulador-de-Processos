@@ -37,3 +37,4 @@ void escalonar();
 celula_pcb *busca(CPU *cpu);
 void bloqueia();
 void encerra();
+void reporter();

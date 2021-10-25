@@ -23,7 +23,7 @@ int main() {
 
         dup2(writepipe[0], STDIN_FILENO);
         close(writepipe[0]);
-        execlp("./process_commander", "./process_commander", NULL);
+        execlp("./manager", "", NULL);
 
     } else {
 		char letra = '\0';

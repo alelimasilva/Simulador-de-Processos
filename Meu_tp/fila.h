@@ -2,5 +2,8 @@
 
 typedef struct fila{ //escalonador 
 	CPU *chave;
-	struct fila *prox;
-}fila;
+	struct Fila *prox;
+}Fila;
+
+void enfilera(Fila **f, CPU *id);
+Fila *desenfilera(Fila **f);

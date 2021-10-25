@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <string.h>
@@ -11,10 +12,35 @@
 //variaveis globais
 int t = 0;
 CPU *atual;
-fila *e_pronto = NULL;
-fila *e_bloqueado = NULL;
+Fila *e_pronto = NULL;
+Fila *e_bloqueado = NULL;
 tabela_pcb *t_pcb = NULL;
 //int mult_pcb = 1;
+
+
+void enfilera(Fila **fila, CPU *id){
+	Fila *celula_fila = (Fila*)malloc(sizeof(Fila));
+	celula_fila->chave = id; 
+	celula_fila->prox = NULL;
+	if(*fila == NULL){
+		*fila = celula_fila;
+		return;
+	}
+
+	Fila *aux = *fila;
+	while(aux->prox != NULL){
+		aux = aux->prox;
+	}
+	aux->prox = celula_fila;
+}
+
+/*Remove o primeiro da fila*/
+Fila *desenfilera(Fila **fila){
+	Fila *aux = *fila;
+	*fila = aux->prox;
+	aux->prox = NULL;
+	return aux;
+}
 
 int conta_linhas(char* arquivo){
 	FILE *f;
@@ -134,11 +160,36 @@ void executa_processo_simulado(){
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			break;
-		case 'F':
-			troca_de_contexto();
+		case 'F':{
+			CPU *aux = (CPU*)malloc(sizeof(CPU));
+			aux->array_programas = (CPU*)malloc(sizeof(programa) * atual->tam);
+			atual->t_atual = 0; // caso o tempo estiver errado, o erro ta aqui
+			*aux = *atual;
+			//aux->t_atual = 0;
+			insere_tabelapcb(aux);
+			//atual->t_atual = 0;
+			atual->cont_prog += atoi(atual->array_programas[atual->cont_prog].valor) + 1; 
+			enfilera(&e_pronto, atual); //insere na fila de processos prontos
+			// troca de imagem
+			if(t_pcb->pcb_atual->status != 'P'){
+				t_pcb->pcb_atual->status = 'P';
+			}
+
+			atual = aux;
+			celula_pcb *aux1 = busca(atual);
+
+			if(aux1 != NULL){
+				t_pcb->pcb_atual = aux1;
+			}
+
+			if(t_pcb->pcb_atual->status != 'E'){
+				t_pcb->pcb_atual->status = 'E';
+			}
+
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			break;
+		}
 		case 'R':{
 			CPU *aux =(CPU*) malloc(sizeof(CPU));
 			*aux = criar(atual->array_programas[atual->cont_prog].valor);
@@ -160,7 +211,7 @@ void escalonar(){
 	if(e_pronto != NULL){
 		atual->t_atual = 0;
 		enfilera(&e_pronto, atual); //insere na fila de processos prontos
-		fila *aux = desenfilera(&e_pronto);
+		Fila *aux = desenfilera(&e_pronto);
 		CPU *cpu = aux->chave; //remove o primeiro processo na fila de prontos
 		// troca de imagem
 		if(t_pcb->pcb_atual->status != 'P'){
@@ -194,7 +245,7 @@ void bloqueia(){
 		t_pcb->pcb_atual->status = 'B';
 	}
 	enfilera(&e_bloqueado, atual); //insere na fila de processos prontos
-	fila *aux = desenfilera(&e_pronto);
+	Fila *aux = desenfilera(&e_pronto);
 	CPU *cpu = aux->chave; //remove o primeiro processo na fila de prontos
 	// troca de imagem
 	if(t_pcb->pcb_atual->status != 'P'){
@@ -211,12 +262,30 @@ void bloqueia(){
 	}
 }
 
+
 void encerra(){
 	if(atual != NULL){
-		remove_pcb(atual);
+		bool volta_posicao = false;
+		int j = 0;
+		for(int i = 0; i < t_pcb->tam; i++){
+			if(t_pcb->pcb[i].programa_cpu == atual){
+				free(t_pcb->pcb[i].programa_cpu->array_programas);
+				free(t_pcb->pcb[i].programa_cpu);
+				volta_posicao = true;
+				j = i;
+			}
+			//if(volta_posicao == true)
+			//	t_pcb->pcb[i] = t_pcb->pcb[i + 1];
+		}
+		if (volta_posicao == true){
+			for (; j < t_pcb->tam; j++){
+				t_pcb->pcb[j] = t_pcb->pcb[j + 1];
+			}
+			t_pcb->tam--;
+		}			
 	}
 	if(e_pronto != NULL){
-		fila *aux = desenfilera(&e_pronto);
+		Fila *aux = desenfilera(&e_pronto);
 		CPU *cpu = aux->chave; //remove o primeiro processo na fila de prontos
 		// troca de imagem
 		if(t_pcb->pcb_atual->status != 'P'){
@@ -230,10 +299,42 @@ void encerra(){
 
 		if(t_pcb->pcb_atual->status != 'E'){
 			t_pcb->pcb_atual->status = 'E';
-			}
-	} else{
+		}
+	}else{
 		return;
 	}
+}
+
+
+
+void reporter(){
+	celula_pcb *a = busca(atual);
+	printf("*****************************************************************************\n"
+		  "Estado do sistema:\n"
+		  "*****************************************************************************\n");
+	printf("TEMPO ATUAL: %d\n",t);
+	printf("PROCESSO EXECUTANDO:\n");
+	printf("pid	ppid	valor	tempo inicio	CPU usada ate agora	nome processo\n");
+	if(atual->cont_prog < atual->tam)
+		printf("%d\t%d	%d\t%d\t\t%d\t\t\t\n", a->pid,a->ppid,a->programa_cpu->id,
+			  a->t_inicio, a->programa_cpu->t_total);
+	printf("PROCESSO BLOQUEADOS:\n");
+	Fila *temp = e_bloqueado;
+	while(temp != NULL){
+		a = busca(temp->chave);
+		temp = temp->prox;
+		printf("%d\t%d	%d\t%d\t\t%d\t\t\t\n", a->pid,a->ppid,a->programa_cpu->id,
+			  a->t_inicio, a->programa_cpu->t_total);
+	}
+	printf("PROCESSO PRONTOS:\n");
+	temp = e_pronto;
+	while(temp != NULL){
+		a = busca(temp->chave);
+		temp = temp->prox;
+		printf("%d\t%d	%d\t%d\t\t%d\t\t\t\n", a->pid,a->ppid,a->programa_cpu->id,
+			  a->t_inicio, a->programa_cpu->t_total);
+	}
+	printf("*****************************************************************************\n\n");
 }
 
 int main(){
@@ -249,21 +350,22 @@ int main(){
 		switch(instrucao){
 			case 'Q':
 				if(e_pronto != NULL)
-					//executa_processo_simulado();
-					printf("");
+					executa_processo_simulado();
 				break;
 			case 'U':
-				if(e_bloqueado != NULL)
+				if(e_bloqueado != NULL){
 					//desbloqueia_processo();
-					printf("");
+					//CPU *aux = desenfilera(&e_bloqueado)->chave; //remove o primeiro elemento na fila de bloqueados 
+					Fila *aux = desenfilera(&e_pronto);
+					CPU *aux1 = aux->chave; //remove o primeiro processo na fila de prontos
+					enfilera(&e_pronto, aux1); //insere na fila de processos prontos
+				}
 				break;
 			case 'P':
-				//reporter();
-				printf("");
+				reporter();
 				break;
 			case 'T':
-				//reporter();
-				printf("");
+				reporter();
 				break;
 		}
 		setbuf(stdout,NULL);
