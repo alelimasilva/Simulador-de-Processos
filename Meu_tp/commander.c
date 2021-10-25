@@ -26,17 +26,15 @@ int main() {
         execlp("./manager", "", NULL);
 
     } else {
-		char letra = '\0';
-        close(writepipe[0]);
-		while(letra != 'T'){
-            while(letra != 'P' || letra != 'Q' || letra != 'U' || letra != 'T'){
-                scanf("%c", &letra);
-                letra = toupper(letra);
-            }
-			write(writepipe[1], &letra, 1);
+		close(writepipe[0]);
+
+		char s;
+		while(s != 'T'){
+			scanf("%c", &s);
+			write(writepipe[1], &s, 1);
 			sleep(1);
-        }
-    }
+		}
+	}
 
     wait(0);
 }
