@@ -92,7 +92,7 @@ int conta_linhas(char* arquivo){
 
 CPU criar(char *arquivo){
 	CPU cpu;
-	cpu.tam = conta_linhas(arquivo);
+	cpu.tam = conta_linhas(arquivo);	
     cpu.array_programas = (programa*)malloc(cpu.tam * sizeof(programa));
 	cpu.id = 0;
 	cpu.cont_prog = 0;
@@ -126,13 +126,13 @@ CPU criar(char *arquivo){
 		}else cpu.array_programas[i].valor = NULL; //caso seja B ou E, será NULL para demonstrar não ter utilização
 		i++;
     }
-	fclose(fp);
+	fclose(fp);	
 	return cpu;
 }
 
 void insere_tabelapcb(CPU *cpu){
 	/*Se a tabela pcb estiver vazia, iserir na posição 0*/
-	if(t_pcb == NULL){
+	if(t_pcb == NULL){		
 		t_pcb = (tabela_pcb*)malloc(sizeof(tabela_pcb));
 		t_pcb->pcb = (celula_pcb*)malloc(sizeof(celula_pcb) * TAM_PCB);
 		t_pcb->pcb[0].pid = 0;
@@ -144,49 +144,63 @@ void insere_tabelapcb(CPU *cpu){
 		t_pcb->pcb[0].status = 'E';
 		t_pcb->pcb_atual = &(t_pcb->pcb[0]);
 		t_pcb->tam = 1;
+		printf("Entrou no IF da insere PCB\n");
 		return;
 	}	
 	/*Insere na primeira posição vazia*/
 	t_pcb->pcb[t_pcb->tam].pid = t_pcb->pcb[t_pcb->tam - 1].pid + 1;
+	printf("1");
 	t_pcb->pcb[t_pcb->tam].ppid = t_pcb->pcb_atual->pid;
+	printf("2");
 	t_pcb->pcb[t_pcb->tam].programa_cpu = (CPU*)malloc(sizeof(CPU) * cpu->tam);
+	printf("3");
 	t_pcb->pcb[t_pcb->tam].programa_cpu = cpu;
+	printf("4");
 	t_pcb->pcb_atual = &(t_pcb->pcb[t_pcb->tam]);
+	printf("5");
 	t_pcb->pcb[t_pcb->tam].t_inicio = t; 
+	printf("6");
 	t_pcb->pcb[t_pcb->tam].status = 'E'; 
+	printf("7");
 	t_pcb->tam++;
+	printf("Fim da função\n");
 }
 
 void executa_processo_simulado(){
 	atual->t_total++;
 	t++;
-
+	printf("entrou executa processo\n");
 	switch(atual->array_programas[atual->cont_prog].operacao){
 		case 'S':
 			atual->id = atoi(atual->array_programas[atual->cont_prog].valor);	
 			printa_comando(atual->array_programas[atual->cont_prog]);		
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
+			printf("Saiu do S\n");
 			break;
 		case 'A':
 			atual->id += atoi(atual->array_programas[atual->cont_prog].valor);
 			printa_comando(atual->array_programas[atual->cont_prog]);
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
+			printf("Saiu do A\n");
 			break;
 		case 'D':
 			atual->id -= atoi(atual->array_programas[atual->cont_prog].valor);
 			printa_comando(atual->array_programas[atual->cont_prog]);
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
+			printf("Saiu do D\n");
 			break;
 		case 'B':
 			bloqueia();
+			printf("saiu do B\n");
 			break;
 		case 'E':
 			encerra();
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
+			printf("Saiu do E\n");
 			break;
 		case 'F':{
 			CPU *aux = (CPU*)malloc(sizeof(CPU));
@@ -217,6 +231,7 @@ void executa_processo_simulado(){
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			printa_comando(atual->array_programas[atual->cont_prog]);
+			printf("saiu do F\n");
 			break;
 		}
 		case 'R':{
@@ -225,15 +240,18 @@ void executa_processo_simulado(){
 			atual = aux;
 			atual->t_total = 0;
 			t_pcb->pcb_atual->programa_cpu = atual;
+			printf("Saiu do R\n");
 			break;
 		}
 	}
 }
 
 void teste_escalonador (int tempo){
+	printf("entrou teste ecalonar\n");
 	if(tempo >= 3){
-		escalonar();
+		escalonar();		
 	}
+	printf("Saiu do teste de escalonar\n");
 }
 
 void escalonar(){
@@ -258,12 +276,14 @@ void escalonar(){
 			t_pcb->pcb_atual->status = 'E';
 		}
 	}
+	printf("Saiu do escalonar\n");
 }
 
 celula_pcb *busca(CPU *cpu){
 	for(int i = 0; i < t_pcb->tam; i++)
 		if(t_pcb->pcb[i].programa_cpu == cpu)
 			return &(t_pcb->pcb[i]);
+	printf("Saiu da busca\n");
 	return NULL;
 }
 
@@ -290,6 +310,7 @@ void bloqueia(){
 	if(t_pcb->pcb_atual->status != 'E'){
 		t_pcb->pcb_atual->status = 'E';
 	}
+	printf("saiu da bloqueia processo\n");
 }
 
 
@@ -330,7 +351,9 @@ void encerra(){
 		if(t_pcb->pcb_atual->status != 'E'){
 			t_pcb->pcb_atual->status = 'E';
 		}
+		printf("saiu da encerra processo\n");
 	}else{
+		printf("Saiu da encerra processo através do else.\n");
 		return;
 	}
 }
@@ -338,6 +361,7 @@ void encerra(){
 
 
 void reporter(){
+	printf("Entrou no reporter\n");
 	celula_pcb *a = busca(atual);
 	printf("*****************************************************************************\n"
 		  "Estado do sistema:\n"
@@ -365,22 +389,25 @@ void reporter(){
 			  a->t_inicio, a->programa_cpu->t_total);
 	}
 	printf("*****************************************************************************\n\n");
+	printf("saiu do reporter.\n");
 }
 
 int main(){
-	char instrucao = '\0';
+	char instrucao;
     //inicializando a CPU
     CPU *cpu = (CPU*)malloc(sizeof(CPU));
 	*cpu = criar("init");
 	// cria processo do carneiro termina aqui
 	insere_tabelapcb(cpu);
 	atual = cpu;
-	while(instrucao != 'T'){
+	do{
 		scanf("%c", &instrucao);
 		switch(instrucao){
 			case 'Q':
-				if(e_pronto != NULL)
+				//if(e_pronto != NULL){
 					executa_processo_simulado();
+					printf("Saiu do Q\n");
+				//}
 				break;
 			case 'U':
 				if(e_bloqueado != NULL){
@@ -390,16 +417,19 @@ int main(){
 					CPU *aux1 = aux->chave; //remove o primeiro processo na fila de prontos
 					enfilera(&e_pronto, aux1); //insere na fila de processos prontos
 				}
+				printf("Saiu do U\n");
 				break;
 			case 'P':
 				reporter();
+				printf("Saiu do P\n");
 				break;
 			case 'T':
 				reporter();
+				printf("saiu do T\n");
 				break;
 		}
 		//setbuf(stdout,NULL);
 		fflush(stdout);
-	}
+	}while(instrucao != 'T');
 }
 
