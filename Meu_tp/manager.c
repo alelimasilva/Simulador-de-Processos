@@ -17,6 +17,31 @@ Fila *e_bloqueado = NULL;
 tabela_pcb *t_pcb = NULL;
 //int mult_pcb = 1;
 
+/*Printa o comando atual na tela*/
+void printa_comando(programa p){
+	if(p.operacao != 'B' && p.operacao != 'E')	
+		printf("%c %s\n", p.operacao, p.valor);	
+	else	
+		printf("%c\n", p.operacao);	
+
+}
+
+/*Printa a fila*/
+void printa_fila(Fila *f){
+	Fila *temp = f;
+	while(temp != NULL){
+		printf("%d ", temp->chave);	
+		temp = temp->prox;
+	}
+	printf("\n");
+}
+
+/*Printa informações basicas sobre o processo*/
+void printa_processo(celula_pcb *p){
+	printf("pid: %d ppid: %d ",p->pid,p->ppid);
+	printa_comando(p->programa_cpu->array_programas[0]);
+}
+
 
 void enfilera(Fila **fila, CPU *id){
 	Fila *celula_fila = (Fila*)malloc(sizeof(Fila));
@@ -55,7 +80,7 @@ int conta_linhas(char* arquivo){
 	char caractere;
 	
 	do{
-    	caractere = getc(arquivo);
+    	caractere = getc(f);
         
         if(caractere == '\n' || caractere == '\0'){
             linhas++;
@@ -138,17 +163,20 @@ void executa_processo_simulado(){
 
 	switch(atual->array_programas[atual->cont_prog].operacao){
 		case 'S':
-			atual->id = atoi(atual->array_programas[atual->cont_prog].valor);			
+			atual->id = atoi(atual->array_programas[atual->cont_prog].valor);	
+			printa_comando(atual->array_programas[atual->cont_prog]);		
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			break;
 		case 'A':
 			atual->id += atoi(atual->array_programas[atual->cont_prog].valor);
+			printa_comando(atual->array_programas[atual->cont_prog]);
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			break;
 		case 'D':
 			atual->id -= atoi(atual->array_programas[atual->cont_prog].valor);
+			printa_comando(atual->array_programas[atual->cont_prog]);
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			break;
@@ -162,7 +190,7 @@ void executa_processo_simulado(){
 			break;
 		case 'F':{
 			CPU *aux = (CPU*)malloc(sizeof(CPU));
-			aux->array_programas = (CPU*)malloc(sizeof(programa) * atual->tam);
+			aux->array_programas = (programa*)malloc(sizeof(programa) * atual->tam);
 			atual->t_atual = 0; // caso o tempo estiver errado, o erro ta aqui
 			*aux = *atual;
 			//aux->t_atual = 0;
@@ -188,6 +216,7 @@ void executa_processo_simulado(){
 
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
+			printa_comando(atual->array_programas[atual->cont_prog]);
 			break;
 		}
 		case 'R':{
@@ -239,6 +268,7 @@ celula_pcb *busca(CPU *cpu){
 }
 
 void bloqueia(){
+	printa_comando(atual->array_programas[atual->cont_prog]);
 	atual->cont_prog++;
 	atual->t_atual = 0;
 	if(t_pcb->pcb_atual->status != 'B'){
@@ -368,8 +398,8 @@ int main(){
 				reporter();
 				break;
 		}
-		setbuf(stdout,NULL);
-		//fflush(stdout);
+		//setbuf(stdout,NULL);
+		fflush(stdout);
 	}
 }
 
