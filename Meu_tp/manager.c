@@ -337,12 +337,10 @@ void encerra(){
 void reporter(){
 	printf("Entrou no reporter\n");
 	celula_pcb *a = busca(atual);
-	printf("*****************************************************************************\n"
-		  "Estado do sistema:\n"
-		  "*****************************************************************************\n");
+	printf("*****************************************************************************\n");
 	printf("TEMPO ATUAL: %d\n",t);
 	printf("PROCESSO EXECUTANDO:\n");
-	printf("pid	ppid	valor	tempo inicio	CPU usada ate agora	nome processo\n");
+	printf("pid	ppid	valor	tempo inicio	CPU usada ate agora	\n");
 	if(atual->cont_prog < atual->tam)
 		printf("%d\t%d	%d\t%d\t\t%d\t\t\t\n", a->pid,a->ppid,a->programa_cpu->id,
 			  a->t_inicio, a->programa_cpu->t_total);
