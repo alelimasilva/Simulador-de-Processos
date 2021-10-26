@@ -17,32 +17,6 @@ Fila *e_bloqueado = NULL;
 tabela_pcb *t_pcb = NULL;
 //int mult_pcb = 1;
 
-/*Printa o comando atual na tela*/
-void printa_comando(programa p){
-	if(p.operacao != 'B' && p.operacao != 'E')	
-		printf("%c %s\n", p.operacao, p.valor);	
-	else	
-		printf("%c\n", p.operacao);	
-
-}
-
-/*Printa a fila*/
-void printa_fila(Fila *f){
-	Fila *temp = f;
-	while(temp != NULL){
-		printf("%d ", temp->chave);	
-		temp = temp->prox;
-	}
-	printf("\n");
-}
-
-/*Printa informações basicas sobre o processo*/
-void printa_processo(celula_pcb *p){
-	printf("pid: %d ppid: %d ",p->pid,p->ppid);
-	printa_comando(p->programa_cpu->array_programas[0]);
-}
-
-
 void enfilera(Fila **fila, CPU *id){
 	Fila *celula_fila = (Fila*)malloc(sizeof(Fila));
 	celula_fila->chave = id; 
@@ -115,15 +89,17 @@ CPU criar(char *arquivo){
 	/*Coloca o comando no char comando da struct processo e*/
 	/*o argumento na string valor */
 	while ((read = getline(&line, &len, fp)) != -1){ // mudar o jeito de ler o arquivo
-		cpu.array_programas[i].operacao = line[0]; //primeira letra do comando principal	
+		cpu.array_programas[i].operacao = line[0]; //primeira letra do comando principal
+		printf("LINE ZERO: %c\nOPERACAO: %c\n", line[0],cpu.array_programas[i].operacao);	
 		if(line[0] != 'B' && line[0] != 'E'){
 			/*Calcula o numero de caracteres no argumento*/
 			for(j = 2; line[j+1] != '\0' && line[j+1] != '\n'; j++); //o for começa de 2, pois o argumento tem início na posição 2, lê até um \n ou \0 para obter o tamanho do argumento
 			/*aloca espaço para o argumento*/
 			cpu.array_programas[i].valor = (char*)malloc(j * sizeof(char));
 			memcpy(cpu.array_programas[i].valor, &line[2], j-1); //copiando coisas de um endereço de memória para outro
-			cpu.array_programas[i].valor[j-1] = '\0'; //introduzindo o \0 para fim de arquivo
-		}else cpu.array_programas[i].valor = NULL; //caso seja B ou E, será NULL para demonstrar não ter utilização
+			cpu.array_programas[i].valor[j-1] = '\0'; //introduzindo o \0 para fim de arquivo			
+		}else cpu.array_programas[i].valor = NULL; //caso seja B ou E, será NULL para demonstrar não ter utilização			
+		
 		i++;
     }
 	fclose(fp);	
@@ -148,51 +124,44 @@ void insere_tabelapcb(CPU *cpu){
 		return;
 	}	
 	/*Insere na primeira posição vazia*/
-	t_pcb->pcb[t_pcb->tam].pid = t_pcb->pcb[t_pcb->tam - 1].pid + 1;
-	printf("1");
+	t_pcb->pcb[t_pcb->tam].pid = t_pcb->pcb[t_pcb->tam - 1].pid + 1;	
 	t_pcb->pcb[t_pcb->tam].ppid = t_pcb->pcb_atual->pid;
-	printf("2");
 	t_pcb->pcb[t_pcb->tam].programa_cpu = (CPU*)malloc(sizeof(CPU) * cpu->tam);
-	printf("3");
-	t_pcb->pcb[t_pcb->tam].programa_cpu = cpu;
-	printf("4");
+	t_pcb->pcb[t_pcb->tam].programa_cpu = cpu;	
 	t_pcb->pcb_atual = &(t_pcb->pcb[t_pcb->tam]);
-	printf("5");
 	t_pcb->pcb[t_pcb->tam].t_inicio = t; 
-	printf("6");
 	t_pcb->pcb[t_pcb->tam].status = 'E'; 
-	printf("7");
 	t_pcb->tam++;
-	printf("Fim da função\n");
 }
 
 void executa_processo_simulado(){
 	atual->t_total++;
 	t++;
 	printf("entrou executa processo\n");
-	switch(atual->array_programas[atual->cont_prog].operacao){
+	if(atual->array_programas[atual->cont_prog].operacao == 'B')
+		printf("É B SIM\n");
+	printf("LETRA: %c\n", atual->array_programas[atual->cont_prog].operacao);
+	switch(atual->array_programas[atual->cont_prog].operacao){		
 		case 'S':
-			atual->id = atoi(atual->array_programas[atual->cont_prog].valor);	
-			printa_comando(atual->array_programas[atual->cont_prog]);		
+			atual->id = atoi(atual->array_programas[atual->cont_prog].valor);				
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			printf("Saiu do S\n");
 			break;
 		case 'A':
-			atual->id += atoi(atual->array_programas[atual->cont_prog].valor);
-			printa_comando(atual->array_programas[atual->cont_prog]);
+			atual->id += atoi(atual->array_programas[atual->cont_prog].valor);			
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			printf("Saiu do A\n");
 			break;
 		case 'D':
-			atual->id -= atoi(atual->array_programas[atual->cont_prog].valor);
-			printa_comando(atual->array_programas[atual->cont_prog]);
+			atual->id -= atoi(atual->array_programas[atual->cont_prog].valor);		
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);
 			printf("Saiu do D\n");
 			break;
 		case 'B':
+			printf("entrou no B\n");
 			bloqueia();
 			printf("saiu do B\n");
 			break;
@@ -229,20 +198,25 @@ void executa_processo_simulado(){
 			}
 
 			atual->cont_prog++;
-			teste_escalonador(++atual->t_atual);
-			printa_comando(atual->array_programas[atual->cont_prog]);
+			teste_escalonador(++atual->t_atual);			
 			printf("saiu do F\n");
 			break;
 		}
 		case 'R':{
 			CPU *aux =(CPU*) malloc(sizeof(CPU));
 			*aux = criar(atual->array_programas[atual->cont_prog].valor);
-			atual = aux;
+			atual = aux;			
 			atual->t_total = 0;
 			t_pcb->pcb_atual->programa_cpu = atual;
 			printf("Saiu do R\n");
 			break;
 		}
+		default:
+			printf("entrou no B\n");
+			printf("LETRA DEFAULT: %c\n", atual->array_programas[atual->cont_prog].operacao);
+			bloqueia();
+			printf("saiu do B\n");
+			break;
 	}
 }
 
@@ -288,12 +262,12 @@ celula_pcb *busca(CPU *cpu){
 }
 
 void bloqueia(){
-	printa_comando(atual->array_programas[atual->cont_prog]);
-	atual->cont_prog++;
+	printf("Entrou na bloqueia processo.\n");	
 	atual->t_atual = 0;
-	if(t_pcb->pcb_atual->status != 'B'){
-		t_pcb->pcb_atual->status = 'B';
-	}
+	atual->cont_prog++;
+	
+	t_pcb->pcb_atual->status = 'B';
+
 	enfilera(&e_bloqueado, atual); //insere na fila de processos prontos
 	Fila *aux = desenfilera(&e_pronto);
 	CPU *cpu = aux->chave; //remove o primeiro processo na fila de prontos
@@ -404,7 +378,7 @@ int main(){
 		scanf("%c", &instrucao);
 		switch(instrucao){
 			case 'Q':
-				//if(e_pronto != NULL){
+				//if(e_pronto != NULL){					
 					executa_processo_simulado();
 					printf("Saiu do Q\n");
 				//}
@@ -432,4 +406,3 @@ int main(){
 		fflush(stdout);
 	}while(instrucao != 'T');
 }
-
