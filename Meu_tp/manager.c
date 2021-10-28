@@ -15,7 +15,6 @@ CPU *atual;
 Fila *e_pronto = NULL;
 Fila *e_bloqueado = NULL;
 tabela_pcb *t_pcb = NULL;
-//int mult_pcb = 1;
 
 void enfilera(Fila **fila, CPU *id){
 	printf("Entrou na enfileira\n");
@@ -40,14 +39,15 @@ void enfilera(Fila **fila, CPU *id){
 Fila *desenfilera(Fila **fila){
 	Fila *aux = *fila;
 	*fila = aux->prox;
-	aux->prox = NULL;
+	aux->prox = NULL;	
+
 	return aux;
 }
 
 int conta_linhas(char* arquivo){
 	FILE *f;
 	f = fopen(arquivo, "r");
-	
+
     if(f == NULL){
           printf("ERRO NA CONTAGEM DE LINHAS\n");
           exit(1);    
@@ -65,7 +65,7 @@ int conta_linhas(char* arquivo){
     }while(caractere != EOF);
 	
 	fclose(f);
-	fflush(stdout);
+	fflush(stdout);		
 		
 	return linhas;
 }
@@ -87,26 +87,24 @@ CPU criar(char *arquivo){
           printf("ERRO NO ARQUIVO\n");
           exit(1);
     }
-	int i = 0;
-	char *line, *args = NULL; //recebe uma linha do arquivo
+	int i, j = 0;
+	char *line; //recebe uma linha do arquivo
     size_t len = 0; //tamanho da linha
-    size_t read;
+    size_t nread;
 	
 	/*Coloca o comando no char comando da struct processo e*/
 	/*o argumento na string valor */
-	while((read = getline(&line, &len, fp)) != -1){ // mudar o jeito de ler o arquivo
-		cpu.array_programas[i].operacao = line[0]; //primeira letra do comando principal		
-		printf("LINE ZERO: %c\nOPERACAO: %c\n", line[0], cpu.array_programas[i].operacao);					
+	while((nread = getline(&line, &len, fp)) != -1){ // mudar o jeito de ler o arquivo
+		cpu.array_programas[i].operacao = line[0]; //primeira letra do comando principal							
 		if(line[0] != 'B' && line[0] != 'E'){			
-			cpu.array_programas[i].valor = strdup(line + 2);											
-			//cpu.array_programas[i].valor[j-1] = '\0'; //introduzindo o \0 para fim de arquivo			
-		}else cpu.array_programas[i].valor = NULL; //caso seja B ou E, será NULL para demonstrar não ter utilização					
-		printf("array_programa:\nVALOR: %s\nOPERACAO: %c\n\n", cpu.array_programas[i].valor, cpu.array_programas[i].operacao);
+			cpu.array_programas[i].valor = strndup(line + 2, (strlen(line+2)-1));													
+		}					
+		printf("array_programa:\nVALOR: %s\nOPERACAO: %c\n", cpu.array_programas[i].valor, cpu.array_programas[i].operacao);
+		printf("tamanho: %d\n", strlen(line));
 		i++;
     }	
 	
 	fclose(fp);	
-	free(args);
 	free(line); 
 	
 	return cpu;
@@ -152,7 +150,8 @@ void escalonar(){
 	if(e_pronto != NULL){
 		atual->t_atual = 0;
 		enfilera(&e_pronto, atual); //insere na fila de processos prontos
-		Fila *aux = desenfilera(&e_pronto);
+		Fila *aux = (Fila*)malloc(sizeof(Fila));
+		aux = desenfilera(&e_pronto);
 		CPU *cpu = aux->chave; //remove o primeiro processo na fila de prontos
 		// troca de imagem
 		if(t_pcb->pcb_atual->status != 'P'){
@@ -189,7 +188,8 @@ void bloqueia(){
 	t_pcb->pcb_atual->status = 'B';
 	printf("Chegou na enfilera\n");
 	enfilera(&e_bloqueado, atual); //insere na fila de processos prontos
-	Fila *aux = desenfilera(&e_pronto);
+	Fila *aux = (Fila*)malloc(sizeof(Fila));
+	aux = desenfilera(&e_pronto);
 	CPU *cpu = aux->chave; //remove o primeiro processo na fila de prontos
 	// troca de imagem
 	printf("Passou da enfilera\n");
@@ -210,7 +210,6 @@ void bloqueia(){
 	}
 	printf("saiu da bloqueia processo\n");
 }
-
 
 void encerra(){
 	if(atual != NULL){
@@ -234,7 +233,8 @@ void encerra(){
 		}			
 	}
 	if(e_pronto != NULL){
-		Fila *aux = desenfilera(&e_pronto);
+		Fila *aux = (Fila*)malloc(sizeof(Fila));
+		aux = desenfilera(&e_pronto);
 		CPU *cpu = aux->chave; //remove o primeiro processo na fila de prontos
 		// troca de imagem
 		if(t_pcb->pcb_atual->status != 'P'){
@@ -321,7 +321,7 @@ void executa_processo_simulado(){
 
 			atual->cont_prog++;
 			teste_escalonador(++atual->t_atual);			
-			printf("saiu do F\n");
+			printf("saiu do F\n");			
 			break;
 
 		}
@@ -329,10 +329,11 @@ void executa_processo_simulado(){
 			printf("entrou no R\n");
 			CPU *aux =(CPU*) malloc(sizeof(CPU));
 			*aux = criar(atual->array_programas[atual->cont_prog].valor);
+			//*aux = criar("programa_a");
 			atual = aux;			
 			atual->t_total = 0;
 			t_pcb->pcb_atual->programa_cpu = atual;
-			printf("Saiu do R\n");
+			printf("Saiu do R\n");			
 			break;
 		}
 	}
@@ -351,7 +352,8 @@ void reporter(){
 		printf("%d\t%d	%d\t%d\t\t%d\t\t\t\n", a->pid,a->ppid,a->programa_cpu->id,
 			  a->t_inicio, a->programa_cpu->t_total);
 	printf("PROCESSO BLOQUEADOS:\n");
-	Fila *temp = e_bloqueado;
+	Fila *temp = (Fila*)malloc(sizeof(Fila)); 
+	temp = e_bloqueado;
 	while(temp != NULL){
 		a = busca(temp->chave);
 		temp = temp->prox;
@@ -392,11 +394,12 @@ int main(){
 				if(e_bloqueado != NULL){
 					//desbloqueia_processo();
 					//CPU *aux = desenfilera(&e_bloqueado)->chave; //remove o primeiro elemento na fila de bloqueados 
-					Fila *aux = desenfilera(&e_pronto);
+					Fila *aux = (Fila*)malloc(sizeof(Fila));
+					aux = desenfilera(&e_pronto);
 					CPU *aux1 = aux->chave; //remove o primeiro processo na fila de prontos
-					enfilera(&e_pronto, aux1); //insere na fila de processos prontos
+					enfilera(&e_pronto, aux1); //insere na fila de processos prontos										
 				}
-				printf("Saiu do U\n");
+				printf("Saiu do U\n");				
 				break;
 			case 'P':
 				reporter();
@@ -410,4 +413,6 @@ int main(){
 		//setbuf(stdout,NULL);
 		fflush(stdout);
 	}while(instrucao != 'T');
+	
+	return 0;
 }
