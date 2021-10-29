@@ -28,12 +28,12 @@ int main() {
     } else {
 		close(writepipe[0]);
 
-		char s;
-		while(s != 'T'){
-			scanf("%c", &s);
-			write(writepipe[1], &s, 1);
+		char comando;
+		do{
+			scanf("%c", &comando);
+			write(writepipe[1], &comando, 1);
 			sleep(1);
-		}
+		}while(comando != 'T');
 	}
 
     wait(0);
