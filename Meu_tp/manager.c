@@ -7,7 +7,7 @@
 #include <string.h>
 #include "fila.h"
 
-#define TAM_PCB 1000
+#define TAM_PCB 50
 
 //variaveis globais
 int t = 0;
@@ -340,6 +340,7 @@ void executa_processo_simulado(){
 }
 
 void reporter(){
+	Fila *temp;
 	printf("Entrou no reporter\n");
 	celula_pcb *a = busca(atual);
 	printf("*****************************************************************************\n"
@@ -352,7 +353,7 @@ void reporter(){
 		printf("%d\t%d	%d\t%d\t\t%d\t\t\t\n", a->pid,a->ppid,a->programa_cpu->id,
 			  a->t_inicio, a->programa_cpu->t_total);
 	printf("PROCESSO BLOQUEADOS:\n");
-	Fila *temp = (Fila*)malloc(sizeof(Fila)); 
+	//Fila *temp = (Fila*)malloc(sizeof(Fila)); 
 	temp = e_bloqueado;
 	while(temp != NULL){
 		a = busca(temp->chave);
@@ -391,14 +392,12 @@ int main(){
 				//}
 				break;
 			case 'U':
-				if(e_bloqueado != NULL){
-					//desbloqueia_processo();
-					//CPU *aux = desenfilera(&e_bloqueado)->chave; //remove o primeiro elemento na fila de bloqueados 
-					Fila *aux = (Fila*)malloc(sizeof(Fila));
-					aux = desenfilera(&e_pronto);
-					CPU *aux1 = aux->chave; //remove o primeiro processo na fila de prontos
-					enfilera(&e_pronto, aux1); //insere na fila de processos prontos										
-				}
+				//desbloqueia_processo();
+				//CPU *aux = desenfilera(&e_bloqueado)->chave; //remove o primeiro elemento na fila de bloqueados 
+				Fila *aux = (Fila*)malloc(sizeof(Fila));
+				aux = desenfilera(&e_bloqueado);
+				CPU *aux1 = aux->chave; //remove o primeiro processo na fila de prontos
+				enfilera(&e_pronto, aux1); //insere na fila de processos prontos										
 				printf("Saiu do U\n");				
 				break;
 			case 'P':
