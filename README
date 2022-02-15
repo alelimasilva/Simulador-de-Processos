@@ -1,4 +1,6 @@
-Para compilar o programa em Linux, basta que o usuário entre no terminal e siga os comandos descritos abaixo:
+Trabalho realizando para disciplina de Sistemas Operacionais na Universidade Federal de São João del-Rei
+
+Para compilar o programa, basta que o usuário entre no terminal e siga os comandos descritos abaixo:
 
 Para compilar o código utilize o comando:
 make all
