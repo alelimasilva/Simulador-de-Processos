@@ -1,0 +1,24 @@
+Para compilar o programa em Linux, basta que o usuário entre no terminal e siga os comandos descritos abaixo:
+
+Para compilar o código utilize o comando:
+make all
+
+O executável será chamado de "commander".
+Para iniciar o programa basta usar o comando:
+./commander < entrada
+
+É imprescindível que o usuário se certifique que no diretório em que está
+tentando fazer a execução do programa estejam presentes os arquivos:
+
+● fila.c
+● fila.h
+● commander.c
+● manager.c
+● manager.h
+● programa_a
+● programa_b
+● init
+● entrada
+
+Caso algum desses arquivos estejam em falta, por favor verificar o .zip
+disponibilizado para utilização do software.
